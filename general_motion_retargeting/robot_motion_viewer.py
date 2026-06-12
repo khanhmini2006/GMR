@@ -119,9 +119,28 @@ class RobotMotionViewer:
         
         self.data.qpos[:3] = root_pos
         self.data.qpos[3:7] = root_rot # quat need to be scalar first! for mujoco
+
+        # Rotate 180° around Z so robot faces camera (front view)
+        from scipy.spatial.transform import Rotation as _R
+        _z180 = _R.from_rotvec([0, 0, np.pi])
+        _orig = _R.from_quat([root_rot[1], root_rot[2], root_rot[3], root_rot[0]])
+        _fixed = (_z180 * _orig).as_quat()
+        self.data.qpos[3:7] = [_fixed[3], _fixed[0], _fixed[1], _fixed[2]]  # xyzw→wxyz
         self.data.qpos[7:] = dof_pos
-        
+
+        # Auto-fix root height: find foot contact points and adjust Z
+        # so the lowest foot sits at ground level (Z=0)
         mj.mj_forward(self.model, self.data)
+        foot_bodies = ['left_foot_link', 'right_foot_link']
+        lowest_z = float('inf')
+        for fn in foot_bodies:
+            if self.model.body(fn).id >= 0:
+                z = self.data.xpos[self.model.body(fn).id][2]
+                if z < lowest_z:
+                    lowest_z = z
+        if lowest_z != float('inf') and abs(lowest_z) > 0.001:
+            self.data.qpos[2] -= lowest_z
+            mj.mj_forward(self.model, self.data)
         
         if follow_camera:
             self.viewer.cam.lookat = self.data.xpos[self.model.body(self.robot_base).id]

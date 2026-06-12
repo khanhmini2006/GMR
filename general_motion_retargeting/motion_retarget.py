@@ -245,8 +245,9 @@ class GeneralMotionRetargeting:
         human_data_local = {}
         root_pos, root_quat = human_data[human_root_name]
         
-        # scale root
+        # scale root (preserve Z = world height, only scale X/Y for lateral)
         scaled_root_pos = human_scale_table[human_root_name] * root_pos
+        scaled_root_pos[2] = root_pos[2]
         
         # scale other body parts in local frame
         for body_name in human_data.keys():
