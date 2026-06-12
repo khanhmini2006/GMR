@@ -57,29 +57,11 @@ def load_gvhmr_pred_file(gvhmr_pred_file, smplx_body_model_path):
     
     betas = np.pad(smpl_params_global['betas'][0], (0,6))
 
-    # Transform GVHMR camera coords → MuJoCo world coords
-    # GVHMR: X=right, Y=forward, Z=up (SMPL canonical)
-    # But GVHMR global coords use: X=right, Y=down_img, Z=forward_cam
-    # Map: MuJoCo X=GVHMR_X, MuJoCo Y=GVHMR_Z, MuJoCo Z=-GVHMR_Y + offset
-    gvhmr_trans = smpl_params_global['transl'].numpy()
-    mj_trans = np.zeros_like(gvhmr_trans)
-    mj_trans[:, 0] = gvhmr_trans[:, 0]           # X → X (right)
-    mj_trans[:, 1] = gvhmr_trans[:, 2]           # Z → Y (forward)
-    mj_trans[:, 2] = -gvhmr_trans[:, 1]          # -Y → Z (up)
-
-    # Add Z offset so pelvis sits at correct height above ground
-    pelvis_target_z = 0.85
-    mj_trans[:, 2] += pelvis_target_z - np.min(mj_trans[:, 2])
-
-    # Note: do NOT apply rotation correction to global_orient here.
-    # get_gvhmr_data_offline_fast() already applies the correct rotation
-    # at lines 368-375 via rotation_matrix.
-
     smplx_data = {
         'pose_body': smpl_params_global['body_pose'].numpy(),
         'betas': betas,
         'root_orient': smpl_params_global['global_orient'].numpy(),
-        'trans': mj_trans,
+        'trans': smpl_params_global['transl'].numpy(),
         "mocap_frame_rate": torch.tensor(30),
     }
 
