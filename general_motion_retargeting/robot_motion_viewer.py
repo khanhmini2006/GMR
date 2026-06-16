@@ -118,12 +118,7 @@ class RobotMotionViewer:
         """
         
         self.data.qpos[:3] = root_pos
-
-        # Rotate 180° around Z so robot faces camera (front view)
-        _z180 = R.from_rotvec([0, 0, np.pi])
-        _orig = R.from_quat([root_rot[1], root_rot[2], root_rot[3], root_rot[0]])
-        _fixed = (_z180 * _orig).as_quat()
-        self.data.qpos[3:7] = [_fixed[3], _fixed[0], _fixed[1], _fixed[2]]  # xyzw→wxyz
+        self.data.qpos[3:7] = root_rot  # wxyz quaternion for MuJoCo
         self.data.qpos[7:] = dof_pos
 
         # Auto-fix root height: find foot contact points and adjust Z
@@ -145,8 +140,8 @@ class RobotMotionViewer:
         if follow_camera:
             self.viewer.cam.lookat = self.data.xpos[self.model.body(self.robot_base).id]
             self.viewer.cam.distance = self.viewer_cam_distance
-            self.viewer.cam.elevation = -10  # 正面视角，轻微向下看
-            # self.viewer.cam.azimuth = 180    # 正面朝向机器人
+            self.viewer.cam.elevation = -15
+            self.viewer.cam.azimuth = 90
         
         if human_motion_data is not None:
             # Clean custom geometry
