@@ -74,14 +74,15 @@ if __name__ == "__main__":
             motion_root_rot = motion_data["motion_root_rot"]
             motion_dof_pos = motion_data["motion_dof_pos"]
             print(f"Switched to motion {motion_id}: {motion_file}, fps: {motion_fps}, num_frames: {len(motion_root_pos)}")
-        
-        
+
         if not paused:
-            env.step(motion_root_pos[frame_idx], 
-                    motion_root_rot[frame_idx], 
-                    motion_dof_pos[frame_idx], 
+            env.step(motion_root_pos[frame_idx],
+                    motion_root_rot[frame_idx],
+                    motion_dof_pos[frame_idx],
                     rate_limit=True)
             frame_idx += 1
             if frame_idx >= len(motion_root_pos):
+                if args.record_video:
+                    break
                 frame_idx = 0
     env.close()
